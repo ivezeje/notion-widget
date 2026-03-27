@@ -21,7 +21,7 @@
     --pink-bg:#fde8f2;--pink-text:#c060a0;
     --peach-bg:#feeee6;--peach-text:#c07848;
     --PX: 14px;
-    --SLOT: 48px;
+    --SLOT: 48px; /* px per hour */
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -65,7 +65,6 @@
     width: 100%; max-width: 320px; padding-bottom: 2rem;
   }
 
-  /* top bar */
   .top-bar {
     display: flex; align-items: center; justify-content: space-between;
     padding: 14px var(--PX) 8px;
@@ -79,7 +78,6 @@
   }
   .tab.active { background: var(--text-main); color: white; }
 
-  /* gcal link */
   .gcal-btn {
     display: flex; align-items: center; gap: 4px;
     padding: 3px 9px 3px 7px; border-radius: 20px;
@@ -90,7 +88,6 @@
   .gcal-btn:hover { background: var(--text-main); color: white; }
   .gcal-btn svg { width: 10px; height: 10px; flex-shrink: 0; }
 
-  /* nav */
   .nav-row {
     display: flex; align-items: center; justify-content: center;
     gap: 8px; padding: 2px 0 8px;
@@ -104,53 +101,59 @@
   .nav-btn:hover { background: var(--text-main); color: white; }
   .nav-date { font-size: 0.78rem; font-weight: 800; color: var(--text-main); min-width: 100px; text-align: center; }
 
-  /* inner pastel card */
   .inner-card {
     margin: 0 var(--PX);
     background: var(--bg-in);
     border-radius: 20px;
     padding: 12px 12px 14px;
-    position: relative;
   }
 
-  /* next badge */
   .next-badge { text-align: center; padding: 4px 0 10px; }
   .next-mins { font-size: 2.2rem; font-weight: 800; color: #b090e0; letter-spacing: -0.04em; line-height: 1; }
   .next-sub { font-size: 0.62rem; color: var(--text-muted); font-weight: 700; margin-top: 1px; }
 
-  /* allday */
   .allday-strip { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
   .allday-chip {
     background: white; border-radius: 20px; font-size: 0.62rem; font-weight: 700;
-    color: var(--text-muted); padding: 3px 9px; box-shadow: var(--shadow);
+    color: var(--text-muted); padding: 3px 9px;
   }
 
-  /* timeline */
-  .tl-wrap { position: relative; }
+  /* ── Day timeline: absolute positioning per minute ── */
+  .tl-outer {
+    position: relative;
+    /* total height = (END_H - START_H) * SLOT px — set by JS */
+  }
   .spine-line {
     position: absolute; left: 33px; top: 0; bottom: 0;
     width: 1.5px; background: var(--spine); border-radius: 2px;
-  }
-  .hour-row { display: flex; align-items: flex-start; height: var(--SLOT); }
-  .hour-label {
-    width: 33px; text-align: right; padding-right: 10px;
-    font-size: 0.68rem; font-weight: 700; color: var(--text-muted);
-    padding-top: 2px; flex-shrink: 0;
-  }
-  .events-col {
-    flex: 1; padding-left: 10px;
-    display: flex; flex-direction: column; gap: 3px;
+    pointer-events: none;
   }
 
-  /* event card */
-  .event-card {
-    border-radius: 14px; padding: 8px 11px;
-    font-size: 0.78rem; font-weight: 700;
-    display: flex; flex-direction: column; gap: 2px;
-    box-shadow: 0 1px 6px rgba(140,110,200,0.08);
-    animation: popIn 0.2s cubic-bezier(.34,1.4,.64,1);
+  /* hour tick rows (background grid) */
+  .hour-tick {
+    position: absolute; left: 0; right: 0;
+    display: flex; align-items: flex-start;
+    pointer-events: none;
   }
-  .event-time-lbl { font-size: 0.6rem; font-weight: 600; opacity: 0.6; }
+  .hour-tick-label {
+    width: 33px; text-align: right; padding-right: 10px;
+    font-size: 0.68rem; font-weight: 700; color: var(--text-muted);
+    line-height: 1; padding-top: 0;
+  }
+
+  /* event card — absolutely positioned */
+  .event-card {
+    position: absolute;
+    left: 43px; right: 0;
+    border-radius: 14px; padding: 7px 10px;
+    font-size: 0.76rem; font-weight: 700;
+    display: flex; flex-direction: column; gap: 2px;
+    overflow: hidden;
+    animation: popIn 0.2s cubic-bezier(.34,1.4,.64,1);
+    min-height: 32px;
+  }
+  .event-title { word-break: keep-all; overflow-wrap: break-word; white-space: normal; line-height: 1.3; }
+  .event-time-lbl { font-size: 0.6rem; font-weight: 600; opacity: 0.6; flex-shrink: 0; }
 
   .yellow{background:var(--yellow-bg);color:var(--yellow-text);}
   .purple{background:var(--purple-bg);color:var(--purple-text);}
@@ -162,7 +165,7 @@
   /* now line */
   .now-wrap {
     position: absolute; left: 0; right: 0;
-    display: flex; align-items: center; pointer-events: none; z-index: 10;
+    display: flex; align-items: center; pointer-events: none; z-index: 20;
   }
   .now-dot {
     width: 8px; height: 8px; border-radius: 50%;
@@ -172,31 +175,22 @@
   .now-rule { flex: 1; height: 1.5px; background: var(--now-color); opacity: 0.5; }
   .now-txt { font-size: 0.6rem; font-weight: 800; color: var(--now-color); padding-right: 2px; }
 
-  /* week */
+  /* ── Week ── */
   .week-scroll { overflow-x: auto; }
   .week-grid { display: grid; min-width: 420px; }
   .week-day-hdr { text-align: center; padding: 4px 2px 6px; }
   .week-day-hdr .wd { font-size: 0.56rem; font-weight: 700; color: var(--text-muted); letter-spacing: 0.08em; }
   .week-day-hdr .wn { font-size: 0.9rem; font-weight: 800; color: var(--text-main); }
   .week-day-hdr.today .wn { color: #9070d0; }
-  .week-hour-lbl {
-    font-size: 0.56rem; font-weight: 700; color: var(--text-muted);
-    text-align: right; padding-right: 5px; padding-top: 3px;
-  }
-  .week-cell {
-    border-top: 1px solid var(--spine);
-    height: var(--SLOT);
-    position: relative; overflow: hidden;
-  }
+  .week-hour-lbl { font-size: 0.56rem; font-weight: 700; color: var(--text-muted); text-align: right; padding-right: 5px; padding-top: 3px; }
+  .week-cell { border-top: 1px solid var(--spine); height: var(--SLOT); position: relative; overflow: hidden; }
   .week-cell.today-col { background: rgba(160,130,220,0.04); }
   .week-ev {
     position: absolute; left: 2px; right: 2px;
     border-radius: 8px; font-size: 0.55rem; font-weight: 700;
-    padding: 2px 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    line-height: 1.4;
+    padding: 2px 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.4;
   }
 
-  /* reset */
   .reset-btn {
     background: none; border: none; font-size: 0.62rem; color: var(--text-muted);
     cursor: pointer; font-family: 'Nunito', sans-serif;
@@ -205,7 +199,7 @@
   }
 
   @keyframes popIn {
-    from{opacity:0;transform:scale(0.9) translateY(3px);}
+    from{opacity:0;transform:scale(0.92) translateY(3px);}
     to{opacity:1;transform:scale(1) translateY(0);}
   }
 </style>
@@ -261,14 +255,22 @@
 let API_KEY='', CAL_ID='', VIEW='day';
 let cursor = new Date();
 
-const SLOT = 48;
-const START_H = 7, END_H = 22;
+const SLOT = 48;       // px per 1 hour
+const START_H = 7;
+const END_H = 22;
+const TOTAL_H = END_H - START_H;
+
 const DOW_EN = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
 const DOW_KO = ['일','월','화','수','목','금','토'];
 const COLOR_MAP = {'1':'purple','2':'green','3':'purple','4':'pink','5':'yellow','6':'peach','7':'blue','8':'purple','9':'blue','10':'green','11':'pink'};
 const PALETTE = ['yellow','purple','blue','green','pink','peach'];
 let pi = 0;
 function nc() { return PALETTE[pi++ % PALETTE.length]; }
+
+// Convert minutes from START_H to px
+function minToPx(totalMinutes) {
+  return Math.round((totalMinutes / 60) * SLOT);
+}
 
 window.onload = () => {
   const k = localStorage.getItem('gcal_key');
@@ -337,6 +339,7 @@ function updateNav() {
   }
 }
 
+// ── Day View ──────────────────────────────────────────────
 async function renderDay(cont) {
   pi=0;
   const {tMin,tMax} = dayRange(cursor);
@@ -351,6 +354,9 @@ async function renderDay(cont) {
     .map(e=>({h:new Date(e.start.dateTime).getHours()+new Date(e.start.dateTime).getMinutes()/60}))
     .filter(x=>x.h>nowH).sort((a,b)=>a.h-b.h)[0];
   const minsLeft = upcoming ? Math.round((upcoming.h-nowH)*60) : null;
+
+  // total canvas height
+  const canvasH = TOTAL_H * SLOT;
 
   let html = `<div class="inner-card">`;
 
@@ -367,44 +373,104 @@ async function renderDay(cont) {
     html+=`</div>`;
   }
 
-  const byHour={};
-  timed.forEach(e=>{ const h=new Date(e.start.dateTime).getHours(); (byHour[h]=byHour[h]||[]).push(e); });
+  // absolute-positioned timeline canvas
+  html+=`<div class="tl-outer" id="dayTl" style="height:${canvasH}px">`;
+  html+=`<div class="spine-line"></div>`;
 
-  html+=`<div class="tl-wrap" id="dayTl" style="position:relative"><div class="spine-line"></div>`;
-
+  // hour tick labels
   for (let h=START_H; h<=END_H; h++) {
-    const evs=byHour[h]||[];
-    html+=`<div class="hour-row">
-      <div class="hour-label">${h}</div>
-      <div class="events-col">`;
-    evs.forEach(e=>{
-      const color=COLOR_MAP[e.colorId]||nc();
-      const st=fmtTime(e.start.dateTime), en=fmtTime(e.end.dateTime);
-      const durH=(new Date(e.end.dateTime)-new Date(e.start.dateTime))/3600000;
-      const minH=Math.max(34,Math.round(durH*SLOT));
-      html+=`<div class="event-card ${color}" style="min-height:${minH}px">
-        <div>${esc(e.summary||'(제목 없음)')}</div>
-        <div class="event-time-lbl">${st} – ${en}</div>
-      </div>`;
-    });
-    html+=`</div></div>`;
+    const topPx = minToPx((h - START_H) * 60);
+    html+=`<div class="hour-tick" style="top:${topPx}px">
+      <div class="hour-tick-label">${h}</div>
+    </div>`;
   }
-  html+=`</div></div>`;
-  cont.innerHTML=html;
 
+  // events — detect overlaps and split into columns
+  const placed = layoutEvents(timed);
+
+  placed.forEach(({event: e, col, totalCols}) => {
+    const color = COLOR_MAP[e.colorId] || nc();
+    const s = new Date(e.start.dateTime);
+    const en = new Date(e.end.dateTime);
+    const startMins = (s.getHours() - START_H)*60 + s.getMinutes();
+    const durMins = (en - s) / 60000;
+    const topPx = minToPx(startMins);
+    const heightPx = Math.max(30, minToPx(durMins) - 3);
+    const st = fmtTime(e.start.dateTime);
+    const enStr = fmtTime(e.end.dateTime);
+
+    // column width split if overlapping
+    const leftBase = 43;
+    const availW = `calc(100% - 43px)`;
+    const colW = totalCols > 1
+      ? `calc((100% - 43px) / ${totalCols} - 3px)`
+      : `calc(100% - 43px)`;
+    const colLeft = totalCols > 1
+      ? `calc(43px + (100% - 43px) / ${totalCols} * ${col})`
+      : `43px`;
+
+    html+=`<div class="event-card ${color}" style="top:${topPx}px;height:${heightPx}px;left:${colLeft};width:${colW}">
+      <div class="event-title">${esc(e.summary||'(제목 없음)')}</div>
+      <div class="event-time-lbl">${st} – ${enStr}</div>
+    </div>`;
+  });
+
+  // now line
   if (isToday) {
-    const tl=document.getElementById('dayTl');
-    const totalSlots=END_H-START_H+1;
-    const pct=Math.max(0,Math.min(1,(nowH-START_H)/totalSlots));
-    const yPos=Math.round(pct*totalSlots*SLOT);
-    const line=document.createElement('div');
-    line.className='now-wrap';
-    line.style.top=yPos+'px';
-    line.innerHTML=`<div class="now-dot"></div><div class="now-rule"></div><div class="now-txt">${pad(now.getHours())}:${pad(now.getMinutes())}</div>`;
-    tl.appendChild(line);
+    const nowMins = (now.getHours() - START_H)*60 + now.getMinutes();
+    const nowPx = minToPx(nowMins);
+    html+=`<div class="now-wrap" style="top:${nowPx}px">
+      <div class="now-dot"></div><div class="now-rule"></div>
+      <div class="now-txt">${pad(now.getHours())}:${pad(now.getMinutes())}</div>
+    </div>`;
   }
+
+  html+=`</div></div>`;
+  cont.innerHTML = html;
 }
 
+// Simple overlap layout: assign column index to overlapping events
+function layoutEvents(events) {
+  const sorted = [...events].sort((a,b)=>new Date(a.start.dateTime)-new Date(b.start.dateTime));
+  const result = [];
+  const groups = [];
+
+  sorted.forEach(e => {
+    const eStart = new Date(e.start.dateTime).getTime();
+    const eEnd = new Date(e.end.dateTime).getTime();
+
+    // find a group this event overlaps with
+    let placed = false;
+    for (const g of groups) {
+      if (eStart < g.end) {
+        // overlaps with group
+        g.end = Math.max(g.end, eEnd);
+        g.events.push({event:e, start:eStart, end:eEnd});
+        placed = true;
+        break;
+      }
+    }
+    if (!placed) {
+      groups.push({end:eEnd, events:[{event:e, start:eStart, end:eEnd}]});
+    }
+  });
+
+  for (const g of groups) {
+    const cols = [];
+    g.events.forEach(item => {
+      let col = 0;
+      while (cols[col] && cols[col] > item.start) col++;
+      cols[col] = item.end;
+      item.col = col;
+    });
+    const totalCols = cols.length;
+    g.events.forEach(item => result.push({event:item.event, col:item.col, totalCols}));
+  }
+
+  return result;
+}
+
+// ── Week View ──────────────────────────────────────────────
 async function renderWeek(cont) {
   pi=0;
   const mon=wkStart(cursor);
@@ -439,10 +505,8 @@ async function renderWeek(cont) {
         const color=COLOR_MAP[e.colorId]||nc();
         const s=new Date(e.start.dateTime);
         const en=new Date(e.end.dateTime);
-        const startMin=s.getMinutes();
-        const durMin=(en-s)/60000;
-        const topPx=Math.round((startMin/60)*SLOT);
-        const heightPx=Math.max(14,Math.round((durMin/60)*SLOT));
+        const topPx=Math.round((s.getMinutes()/60)*SLOT);
+        const heightPx=Math.max(14,Math.round(((en-s)/3600000)*SLOT));
         html+=`<div class="week-ev ${color}" style="top:${topPx}px;height:${heightPx}px">${esc(e.summary||'…')}</div>`;
       });
       html+=`</div>`;
@@ -452,6 +516,7 @@ async function renderWeek(cont) {
   cont.innerHTML=html;
 }
 
+// ── API ───────────────────────────────────────────────────
 async function fetchEvents(tMin,tMax) {
   const url=`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CAL_ID)}/events`
     +`?key=${API_KEY}&timeMin=${encodeURIComponent(tMin)}&timeMax=${encodeURIComponent(tMax)}`
@@ -461,6 +526,7 @@ async function fetchEvents(tMin,tMax) {
   return (await r.json()).items||[];
 }
 
+// ── Helpers ───────────────────────────────────────────────
 function dayRange(d) {
   const s=new Date(d); s.setHours(0,0,0,0);
   const e=new Date(d); e.setHours(23,59,59,999);
